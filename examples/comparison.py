@@ -47,9 +47,9 @@ def bayesopt_optimize(iteration_count, dimensions):
     root.add('p', RosenbrockMultiDim(dimensions))
 
     top.driver = BayesoptOptimizer()
-    top.driver.options["n_iterations"] = iteration_count
+    top.driver.options["n_iterations"] = iteration_count - 5
     top.driver.options["n_iter_relearn"] = 20
-    top.driver.options["n_init_samples"] = 40
+    top.driver.options["n_init_samples"] = 5
     top.driver.options["n_inner_iterations"] = 1000
     top.driver.options["surr_name"] = "sGaussianProcessML"
     top.driver.add_objective('p.f')
@@ -104,14 +104,14 @@ def cobyla_optimize(iteration_count, dimensions):
 def main():
     iteration_counts_to_test = [10, 20, 50, 100, 200, 500, 1000]
     dimensions_to_test = range(2, 8) # Test with dimensionality from 2 to 7 (see how precision/time changes with number of dimensions)
-    methods_to_test = [('COBYLA', cobyla_optimize, 10), ('BayesOpt', bayesopt_optimize, 10)]
+    methods_to_test = [('COBYLA', cobyla_optimize, 10, False), ('BayesOpt', bayesopt_optimize, 10, True)]
     # For each iteration_count that we want to test, run COBYLA once and Bayesopt ten times (it's nondeterministic)
     with open('results.csv', 'wb') as csvFile:
         csvWriter = csv.writer(csvFile)
         csvWriter.writerow(["Method", "Dimensions", "Iterations", "Minimum Found", "Time"])
 
         for iteration_count in iteration_counts_to_test:
-            for method_name, method, run_count in methods_to_test:
+            for method_name, method, run_count, needs_sleep in methods_to_test:
                 for dimensions in dimensions_to_test:
                     for i in range(run_count):
                         startTime = time.clock()
@@ -119,6 +119,11 @@ def main():
                         stopTime = time.clock()
                         csvWriter.writerow([method_name, dimensions, iteration_count, minimum, stopTime - startTime])
                         csvFile.flush()
+
+                        # If execution takes less than a second, sleep so we make sure Bayesopt gets a different seed
+                        # (bayesopt appears to be seeding based on the time in seconds)
+                        if needs_sleep and (stopTime - startTime) < 1.0:
+                            time.sleep(1)
 
 
 if __name__ == "__main__":
