@@ -10,8 +10,6 @@ from bayesopt_openmdao.bayesopt_optimizer import BayesoptOptimizer
 
 from openmdao.api import IndepVarComp, Component, Problem, Group, ScipyOptimizer
 
-_DIMENSIONS = 4
-
 class RosenbrockMultiDim(Component):
     """ Evaluates the equation f(x,y) = (x-3)^2 + xy + (y+4)^2 - 3 """
 
@@ -42,13 +40,11 @@ class RosenbrockMultiDim(Component):
 
         print("Evaluated function and got", unknowns['f'])
     
-def bayesopt_optimize(iteration_count):
-    dimensions = 7
-
+def bayesopt_optimize(iteration_count, dimensions):
     top = Problem()
     root = top.root = Group()
 
-    root.add('p', RosenbrockMultiDim(_DIMENSIONS))
+    root.add('p', RosenbrockMultiDim(dimensions))
 
     top.driver = BayesoptOptimizer()
     top.driver.options["n_iterations"] = iteration_count
@@ -58,7 +54,7 @@ def bayesopt_optimize(iteration_count):
     top.driver.options["surr_name"] = "sGaussianProcessML"
     top.driver.add_objective('p.f')
 
-    for i in range(_DIMENSIONS):
+    for i in range(dimensions):
         componentName = 'p{0}'.format(i)
         variableName = 'x{0}'.format(i)
         portName = '{0}.{1}'.format(componentName, variableName)
@@ -74,18 +70,18 @@ def bayesopt_optimize(iteration_count):
     print('Minimum of %f found' % (top['p.f']))
     return top['p.f']
 
-def cobyla_optimize(iteration_count):
+def cobyla_optimize(iteration_count, dimensions):
     top = Problem()
     root = top.root = Group()
 
-    root.add('p', RosenbrockMultiDim(_DIMENSIONS))
+    root.add('p', RosenbrockMultiDim(dimensions))
 
     top.driver = ScipyOptimizer()
     top.driver.options['optimizer'] = 'COBYLA'
     top.driver.options['maxiter'] = iteration_count
     top.driver.add_objective('p.f')
 
-    for i in range(_DIMENSIONS):
+    for i in range(dimensions):
         componentName = 'p{0}'.format(i)
         variableName = 'x{0}'.format(i)
         portName = '{0}.{1}'.format(componentName, variableName)
@@ -98,7 +94,7 @@ def cobyla_optimize(iteration_count):
     top.run()
 
     result_x = []
-    for i in range(_DIMENSIONS):
+    for i in range(dimensions):
         result_x.append(top['p.x{0}'.format(i)])
 
     print('\n')
@@ -107,20 +103,22 @@ def cobyla_optimize(iteration_count):
 
 def main():
     iteration_counts_to_test = [10, 20, 50, 100, 200, 500, 1000]
+    dimensions_to_test = range(2, 8) # Test with dimensionality from 2 to 7 (see how precision/time changes with number of dimensions)
     methods_to_test = [('COBYLA', cobyla_optimize, 10), ('BayesOpt', bayesopt_optimize, 10)]
     # For each iteration_count that we want to test, run COBYLA once and Bayesopt ten times (it's nondeterministic)
     with open('results.csv', 'wb') as csvFile:
         csvWriter = csv.writer(csvFile)
-        csvWriter.writerow(["Method", "Iterations", "Minimum Found", "Time"])
+        csvWriter.writerow(["Method", "Dimensions", "Iterations", "Minimum Found", "Time"])
 
         for iteration_count in iteration_counts_to_test:
             for method_name, method, run_count in methods_to_test:
-                for i in range(run_count):
-                    startTime = time.clock()
-                    minimum = method(iteration_count)
-                    stopTime = time.clock()
-                    csvWriter.writerow([method_name, iteration_count, minimum, stopTime - startTime])
-                    csvFile.flush()
+                for dimensions in dimensions_to_test:
+                    for i in range(run_count):
+                        startTime = time.clock()
+                        minimum = method(iteration_count, dimensions)
+                        stopTime = time.clock()
+                        csvWriter.writerow([method_name, dimensions, iteration_count, minimum, stopTime - startTime])
+                        csvFile.flush()
 
 
 if __name__ == "__main__":
