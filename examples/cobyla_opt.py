@@ -3,9 +3,8 @@
 from __future__ import print_function
 from __future__ import division
 
-from bayesopt_openmdao.bayesopt_optimizer import BayesoptOptimizer
-
 from openmdao.api import IndepVarComp, Component, Problem, Group
+from openmdao.api import ScipyOptimizer
 
 class Paraboloid(Component):
     """ Evaluates the equation f(x,y) = (x-3)^2 + xy + (y+4)^2 - 3 """
@@ -54,11 +53,11 @@ def main():
     root.connect('p1.x', 'p.x')
     root.connect('p2.y', 'p.y')
 
-    top.driver = BayesoptOptimizer()
-    top.driver.options["n_iterations"] = 200
+    top.driver = ScipyOptimizer()
+    top.driver.options['optimizer'] = 'COBYLA'
 
-    top.driver.add_desvar('p1.x', lower=-40, upper=50)
-    top.driver.add_desvar('p2.y', lower=-20, upper=50)
+    top.driver.add_desvar('p1.x', lower=-50, upper=50)
+    top.driver.add_desvar('p2.y', lower=-50, upper=50)
     top.driver.add_objective('p.f_xy')
 
     top.setup()

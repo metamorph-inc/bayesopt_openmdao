@@ -31,6 +31,14 @@ class BayesoptOptimizer(Driver):
         #                         desc='Name of optimizer to use')
         self.options.add_option('n_iterations', 200, lower=0,
                                 desc='Number of iterations.')
+        self.options.add_option('n_inner_iterations', 500, lower=0,
+                                desc='Number of iterations.')
+        self.options.add_option('n_iter_relearn', 5, lower=0,
+                                desc='Number of iterations.')
+        self.options.add_option('n_init_samples', 2, lower=0,
+                                desc='Number of iterations.')
+        self.options.add_option('surr_name', "sGaussianProcess",
+                                desc='Number of iterations.')
         self.options.add_option('disp', True,
                                 desc='Set to False to prevent printing of Scipy '
                                 'convergence messages')
@@ -80,8 +88,10 @@ class BayesoptOptimizer(Driver):
 
         bopt_params = {}
         bopt_params['n_iterations'] = self.options['n_iterations']
-        bopt_params['n_iter_relearn'] = 5
-        bopt_params['n_init_samples'] = 2
+        bopt_params['n_inner_iterations'] = self.options['n_inner_iterations']
+        bopt_params['n_iter_relearn'] = self.options['n_iter_relearn']
+        bopt_params['n_init_samples'] = self.options['n_init_samples']
+        bopt_params['surr_name'] = self.options['surr_name']
 
 
         # Size Problem
