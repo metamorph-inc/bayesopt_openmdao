@@ -70,6 +70,37 @@ def bayesopt_optimize(iteration_count, dimensions):
     print('Minimum of %f found' % (top['p.f']))
     return top['p.f']
 
+def bayesopt_lownoise_optimize(iteration_count, dimensions):
+    top = Problem()
+    root = top.root = Group()
+
+    root.add('p', RosenbrockMultiDim(dimensions))
+
+    top.driver = BayesoptOptimizer()
+    top.driver.options["n_iterations"] = iteration_count - 5
+    top.driver.options["n_iter_relearn"] = 20
+    top.driver.options["n_init_samples"] = 5
+    top.driver.options["n_inner_iterations"] = 1000
+    top.driver.options["noise"] = 1e-10
+    top.driver.options["surr_name"] = "sGaussianProcessML"
+    top.driver.add_objective('p.f')
+
+    for i in range(dimensions):
+        componentName = 'p{0}'.format(i)
+        variableName = 'x{0}'.format(i)
+        portName = '{0}.{1}'.format(componentName, variableName)
+        root.add(componentName, IndepVarComp(variableName, 0.0))
+        root.connect(portName, 'p.{0}'.format(variableName))
+        top.driver.add_desvar(portName, lower=-5, upper=5)
+
+    top.setup()
+
+    top.run()
+
+    print('\n')
+    print('Minimum of %f found' % (top['p.f']))
+    return top['p.f']
+
 def cobyla_optimize(iteration_count, dimensions):
     top = Problem()
     root = top.root = Group()
@@ -104,7 +135,9 @@ def cobyla_optimize(iteration_count, dimensions):
 def main():
     iteration_counts_to_test = [10, 20, 50, 100, 200, 500, 1000]
     dimensions_to_test = range(2, 8) # Test with dimensionality from 2 to 7 (see how precision/time changes with number of dimensions)
-    methods_to_test = [('COBYLA', cobyla_optimize, 10, False), ('BayesOpt', bayesopt_optimize, 10, True)]
+    methods_to_test = [#('COBYLA', cobyla_optimize, 10, False),
+                       #('BayesOpt', bayesopt_optimize, 10, True),
+                       ('BayesOptLowNoise', bayesopt_lownoise_optimize, 10, True)]
     # For each iteration_count that we want to test, run COBYLA once and Bayesopt ten times (it's nondeterministic)
     with open('results.csv', 'wb') as csvFile:
         csvWriter = csv.writer(csvFile)

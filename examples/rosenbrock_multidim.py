@@ -40,7 +40,7 @@ class RosenbrockMultiDim(Component):
 def main():
     print("Bayesopt OpenMDAO Optimizer example")
 
-    dimensions = 7
+    dimensions = 3
 
     top = Problem()
     root = top.root = Group()
@@ -48,10 +48,11 @@ def main():
     root.add('p', RosenbrockMultiDim(dimensions))
 
     top.driver = BayesoptOptimizer()
-    top.driver.options["n_iterations"] = 5000
+    top.driver.options["n_iterations"] = 200
     top.driver.options["n_iter_relearn"] = 20
-    top.driver.options["n_init_samples"] = 40
+    top.driver.options["n_init_samples"] = 5
     top.driver.options["n_inner_iterations"] = 1000
+    top.driver.options["noise"] = 1e-10
     top.driver.options["surr_name"] = "sGaussianProcessML"
     top.driver.add_objective('p.f')
 
