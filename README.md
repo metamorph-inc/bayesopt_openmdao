@@ -2,7 +2,7 @@
 
 ## Installation (Windows)
 
- 1. Copy `bayesopt.pyd` into your python `site_packages` directory.
+ 1. `pip install bayesopt`
  2. Install this package with `pip install -e .` (or `python -m pip install -e .` if using the Tonka Python).
 
 ## Usage
