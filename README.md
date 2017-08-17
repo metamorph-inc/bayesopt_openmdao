@@ -2,7 +2,7 @@
 
 ## Installation (Windows)
 
- 1. `pip install bayesopt`
+ 1. `pip install bayesopt_openmdao`
  2. Install this package with `pip install -e .` (or `python -m pip install -e .` if using the Tonka Python).
 
 ## Usage
